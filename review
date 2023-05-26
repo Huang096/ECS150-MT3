@@ -1,1 +1,20 @@
+Synchronization
 
+  Semaphores
+    信号量是一种同步机制，用于控制并访问共享资源的方式。
+    用于多线程或多进程，用于保护临界区的访问
+    会维护一个内部的计数器，表示可用资源数量
+    当一个线程需要访问共享资源，需要先获取信号量
+      如果计数器大于零，说明可用资源存在，这时候计数器减一，表示已经用掉一个资源
+      如果计数器等于零，则线程需要等待，直到其他进程释放一个信号量，使得计数器增加
+      
+  API
+    sem = sem_create(count);
+    down() or P()
+      decrease by 1, block if already 0
+    up() or V()
+      increase by 1, wake up one of the waiting thread
+      
+  Binary semaphore
+    0 or 1
+    如果
