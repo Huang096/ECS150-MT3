@@ -17,4 +17,19 @@ Synchronization
       
   Binary semaphore
     0 or 1
-    如果
+    如果是1，表示锁可以被获取，如果是0，表示锁不可以被获取，也就是已经被其他线程占用
+    如果是锁，线程会不断检查有没有可以用的锁，如果不行，就会进行循环等待
+    而binary semaphore里面，等待的线程会直接被block，不会占用cpu资源
+    Initial value is generally 1 (ie free)
+    
+    sem = sem_create(1)
+    down(sem);
+      Critical Section;
+    up(sem);
+    
+    
+  Counted semaphore
+    可以用来表示具有多个单位的资源
+    计数信号量是一种计数器，用来追踪可用资源的数量
+    当一个线程需要获取资源，它会尝试获取计数信号量
+      如果计数信号量
