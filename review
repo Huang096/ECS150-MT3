@@ -191,6 +191,70 @@ Deadlock
           
   Invalid No preemption
       Make resources preemptable by runtime system
-          允许抢占
-      Two-phase locking
+          如果一个任务想要请求的所有资源都不可用，则系统会允许其他任务抢占这个任务已经获得的资源
+          如果一个任务正在等待某个资源，那么系统会允许其他任务抢占这个任务已经获得的资源
+      only work when轻松实现保存和恢复
+          mem page via swapping
+          CPU via context switching
+          
+  Invalid Circular wait
+      assign ID for resources, all requests must be in ascendingorder of the ID
       
+  Lock-free data structures
+      often based
+      
+      
+Storage
+    Mem issues
+        Volatile
+            data lost upon power off
+        Small
+          8 GiB to 18=6 GiB
+        Expensive
+    Mem hierarchy
+        CPU register -> L1 cache (SRAM) -> L2 cache (SRAM) -> Main mem (DRAM) -> Local Secdonary Storage (Flash or 磁盘) 
+        -> remost sec storage(tapes, distributed system, cloud)
+        
+        
+    Volatile mem
+        SRAM
+            bits stored in transistor flip/flops
+            bits degreade on power off
+            1 - 10 nx
+            On - chip cache
+        DRAM
+            bits stored in capacitors
+            2D/3D array for dense packing
+            Bits degrade even when powered: need periodically refreshed
+            50 - 100 nx
+            
+    Persistent mem
+        Magnetic disk
+            > 1 Tbite per square inch
+            physical motion needed to read bits off surface
+            Not directly addressable
+            block level random access
+        Flash/SSD
+            Solid State Drive
+            Blocks of bits stored persistently in silicon
+            Densely packed in 2D array
+            Electrically reprogrammable
+                clean page, no in place update
+                erasing only for regions of blocks
+        
+
+    Disk Operation
+        seek time: arm找到合适的cylinder，把head放到track上面
+        rotation time： 等转盘转到合适的sector，那一小截
+        transfer time： 转到了适当的那一小截之后，开始读写
+        
+        seek time: 1/3 max time
+        
+        Ramdom reads: 500 * (seek + rotation + transfer)
+    
+    
+    FCFS：FIFO
+        每次
+
+    
+    
