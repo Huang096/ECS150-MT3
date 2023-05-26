@@ -32,4 +32,25 @@ Synchronization
     可以用来表示具有多个单位的资源
     计数信号量是一种计数器，用来追踪可用资源的数量
     当一个线程需要获取资源，它会尝试获取计数信号量
-      如果计数信号量
+      如果计数信号量大于所需资源数量，可以继续执行
+      如果小于，线程会被block
+    避免过度资源竞争和资源耗尽，也就是可以避免超过最大容量
+    
+    sem_packet = sem_create(0);   创建一个技术信号量，初始值为0，用于管理可用的数据包
+    
+    while (1) {
+      x = get_network_packet();   获取一个网络数据包
+      enqueue(packetq, x);        把这个网络数据包放入数据包队列
+      up(sem_packet);             可用数据包 + 1
+    }
+    
+    while (1) {
+      down(sem_packet);           取出一个网络数据包
+      x = dequeue(packetq);       把这个数据包拿出数据包队列
+      process_contents(x);        可用数据包 - 1
+    }
+    
+    
+Producer-consumer problem
+  两个或多个线程通过一个循环缓冲区进行通信，其中一些线程负责生产数据，而其他线程负责消费数据
+    bounded buffer: 固定大小的循环数据缓冲区，用来储存生产者
