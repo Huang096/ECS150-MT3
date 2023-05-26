@@ -53,4 +53,144 @@ Synchronization
     
 Producer-consumer problem
   两个或多个线程通过一个循环缓冲区进行通信，其中一些线程负责生产数据，而其他线程负责消费数据
-    bounded buffer: 固定大小的循环数据缓冲区，用来储存生产者
+    bounded buffer: 固定大小的循环数据缓冲区，用来储存生产者生成的数据。大小为N，缓冲区能容纳N个数据
+    生产者
+      负责生成数据，并写进缓冲区，向右移动写指针，从缓冲区当前写到的位置开始写入数据
+      并且在写入时可以循环到缓冲区开始的位置，写的时候是不能超过缓冲区可用空间，避免数据覆盖
+    消费者
+      负责从缓冲区读取并且消费数据，读取操作是向右移动指针，从缓冲区当前读到的位置开始读取数据
+      并且可以循环到缓冲区起始位置，不应该在没有数据的时候读取，以避免读取无效数据
+    允许多个生产者和消费者
+    写指针和读指针是相互独立的，所以能够降低读和写的关联性
+    
+    
+  Solution 1: no protection
+    void produce(int item) {  生产
+      buf[in] = item;         在buffer的in位置，写入item
+      in = (in + 1) % N;      确保往右移，然后循环
+    }
+    
+    int consume(void) {       消耗
+      int item = buf[out];    从buffer的out位置，读取item
+      out = (out + 1) % N;    往右移，然后循环
+      return item;            返回读取到的item
+    }
+    
+  Solution 2: Lock semaphores
+      Multual exclusion around critical section
+      Only one producer and one consumer at a time
+
+      int buf[N], in, out;
+      sem_t lock_prod = sem_create(1)       初始计数值为1的信号量表示只有一个线程allow
+      sem_t lock_cons = sem_create(1)
+
+      void produce(int item) {  生产
+        sem_down(lock_prod);    take一个producer的信号量
+        buf[in] = item;         在buffer的in位置，写入item
+        in = (in + 1) % N;      确保往右移，然后循环
+        sem_up(lock_prod);      完成了product，lock_prod + 1, 允许下一个prod线程produce
+      }
+
+      int consume(void) {       消耗
+        sem_down(lock_cons)     take一个consumer的信号量
+        int item = buf[out];    从buffer的out位置，读取item
+        out = (out + 1) % N;    往右移，然后循环
+        return item;            返回读取到的item
+        sem_up(lock_cons)       完成consume，lock_cons + 1, 允许下一个cons线程consume
+      }
+  
+  
+  Solution 3: Communication semaphores
+      int buf[N], in, out;
+      sem_t lock_prod = sem_create(1)
+      sem_t lock_cons = sem_create(1)
+      sem_t available = sem_create(N)       能够被用来写
+      sem_t taken = sem_create(0)           被写了
+      
+      void produce(int item){
+        sem_down(empty);                    一开始写，能够用来被写 -1
+        sem_down(lock_prod);
+        buf[in] = item;
+        in = (in + 1) % N;
+        sum_up(lock_prod);
+        sem_up(full);                       被写了 +1
+      }
+      
+      void consume(int item){
+        sem_down(taken);                    从被写了的block读
+        sem_down(lock_cons);
+        buf[out] = item;
+        out = (out + 1) % N
+        sem_up(lock_cons);
+        sem_up(available);
+      }
+      
+      
+  Readers-writers problem
+    
+    Solution 1: Protect resource
+      sem_t rw_lock = sem_create(1)
+      在writer和reader函数里面，每次调用都会acquire lock，这样子保证了一次只有一个线程读或者写，但是并不能允许多个reader
+      
+    Solution 2: Enable multiple readers
+      int read_count = 0;                 初始化，没有线程正在读
+                                          每次有线程要读，就会通过这一步来记录，有多少线程在读
+      int reader(void){
+        rcount ++;
+        if(rcount == 1)                   对于第一个操作为读的线程
+          sem_down(rw_lock)               获取锁，后面其他线程的读操作不用获取锁
+        rcount --;                        每当一个线程完成读，更新正在读的数量
+        if (rcount == 0)                  如果没有线程正在读
+          sem_up(rw_lock)                 release lock
+      }
+    Issue：可能会有两个reader同时尝试update rcount，race condition
+    
+    Solution 3 Protect multiple readers
+      int rcount 0;
+      sem_t rw_lock = sem_create(1), count_lock = sem_create(1)
+      也就是在modify rcount还有if前后acquire and release lock
+      
+      
+Deadlock
+  
+  conditions describing a deadlock
+    1. mutual exclusion/bounded resources
+        one resource can only be hold by one task at a time
+    2. hold and wait
+        each task is holding while wait for other resources
+    3. resources cannot be preempt
+    4. circular wait
+        one waiting for another in circular fashion
+        
+    4 strategies to deal with deadlocks
+        1. Ostrich algorithm
+            ignore the problem
+            reset
+        2. Detection and recovery
+            let it occur and fixed it afterward
+        3. Dynamic avoidance
+            careful resource allocaiton during execution, try to avaoid
+        4. Prevention
+            by sign, so avoid the four condition for deadlock
+            
+    
+  Invalid mutual exclusion/bounded resources
+      increase number of available resources
+      Virtualization
+      Lock-free resources
+        make them sharable without mutual exclusion requirement
+        
+  Invalid Hold and wait:  don't hold resources when waiting for another
+      Two-phase locking
+        phase1: try to lock all the required resources
+        phase2: if successful, release all the lock acquired
+                else, release all the lock and try acquire later
+        Issue:
+          Starvation if never able to get all the resources it needs
+          complicated to manage when large amount of resources
+          
+  Invalid No preemption
+      Make resources preemptable by runtime system
+          允许抢占
+      Two-phase locking
+      
